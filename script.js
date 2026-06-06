@@ -10,8 +10,8 @@ const spotify = (word) => {
     const options = {
         method: 'GET',
         headers: {
-            'X-RapidAPI-Key': 'b57c3846b9msh17018c25c4c6f33p1c5692jsn0f18df506b4d',
-            'X-RapidAPI-Host': 'shazam.p.rapidapi.com'
+            'X-RapidAPI-Key': 'b57c3846b9msh17018c25c4c6f33p1c5692jsn0f18df506b4',
+            'X-RapidAPI-Host': 'shazam-api6.p.rapidapi.com'
         }
     };
 
