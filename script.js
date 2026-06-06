@@ -6,49 +6,85 @@ var coverArt = document.getElementById("cover-art");
 var artist = document.getElementById("artist");
 var showDiv = document.getElementById("hide");
 
-const spotify = (word) => {
+const spotify = async (word) => {
+    const url = `https://shazam-api6.p.rapidapi.com/shazam/search_track/?query=${encodeURIComponent(word)}&limit=5`;
+    
     const options = {
         method: 'GET',
         headers: {
-            'X-RapidAPI-Key': 'b57c3846b9msh17018c25c4c6f33p1c5692jsn0f18df506b4',
-            'X-RapidAPI-Host': 'shazam-api6.p.rapidapi.com'
+            'x-rapidapi-key': 'b57c3846b9msh17018c25c4c6f33p1c5692jsn0f18df506b4d',
+            'x-rapidapi-host': 'shazam-api6.p.rapidapi.com'
         }
     };
 
-    fetch("https://shazam-api6.p.rapidapi.com/search?term=" + word + "&locale=en-US&offset=0&limit=5", options)
-        .then((response) => { return response.json() })
-        .then((response) => {
-            //unhiding the div
+    try {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error(`HTTP Error! Status: ${res.status}`);
+
+        const response = await res.json();
+
+        // Target the precise array array path based on your payload structure
+        const songData = response.results?.songs?.data;
+
+        if (songData && songData.length > 0) {
+            // Pick the first/top matching song object
+            const track = songData[0];
+            const attrs = track.attributes;
+
+            // Unhide the card presentation container
             showDiv.style.display = "block";
 
-            //deleting previous search
+            // Clean layout slates before appending new items
             audioBar.innerHTML = "";
             songName.innerHTML = "";
 
-            //adding cover art
-            coverArt.src = response.tracks.hits[0].track.share.image;
+            // 1. Map Song Title & Artist Text
+            songName.innerHTML = `${attrs.name} — <small style="font-size: 0.7em; color: #b3b3b3;">${attrs.artistName}</small>`;
 
-            //adding artist photo
-            artist.src = response.tracks.hits[0].track.share.avatar;
+            // 2. Handle Artwork Placeholder Dimensions
+            if (attrs.artwork && attrs.artwork.url) {
+                // Dynamically transform templates like "{w}x{h}" into a clean 500x500px resolution URL
+                let formattedImgUrl = attrs.artwork.url.replace('{w}', '500').replace('{h}', '500');
+                
+                coverArt.src = formattedImgUrl;
+                artist.src = formattedImgUrl; // Reusing high-quality artwork since this payload lacks standalone avatar icons
+            }
 
-            //adding song name and artist
-            songName.innerHTML = response.tracks.hits[0].track.share.subject;
+            // 3. Map Streaming Audio Snippet URL
+            const previewUrl = attrs.previews?.[0]?.url;
 
-            //adding the audio tag
-            var sound = document.createElement('audio');
-            sound.id = 'audio-player';
-            sound.controls = 'controls';
-            sound.src = response.tracks.hits[0].track.hub.actions[1].uri;
-            sound.type = 'audio/mpeg';
-            sound.style.cssText += 'width: 100%;';
-            audioBar.appendChild(sound);
-        })
-        .catch(err => console.error(err));
+            if (previewUrl) {
+                var sound = document.createElement('audio');
+                sound.id = 'audio-player';
+                sound.controls = 'controls';
+                sound.src = previewUrl;
+                sound.type = 'audio/mpeg';
+                sound.style.cssText += 'width: 100%;';
+                audioBar.appendChild(sound);
+            } else {
+                console.warn("An audio preview stream target is missing for this track entry.");
+            }
+
+        } else {
+            // Handle valid API runs that yield no query results
+            showDiv.style.display = "block";
+            songName.innerHTML = "No results found matching your query.";
+            coverArt.src = "";
+            artist.src = "";
+            audioBar.innerHTML = "";
+        }
+
+    } catch (err) {
+        console.error("Fetch Routine Fail:", err);
+        showDiv.style.display = "block";
+        songName.innerHTML = "An API routing error occurred.";
+    }
 };
 
+// Form submission listener matching your index.html target button
 button.addEventListener("click", (e) => {
-    //this will not let the page to reload and let the changes disappear
     e.preventDefault();
-    
-    spotify(wordSearched.value);
+    if (wordSearched.value.trim() !== "") {
+        spotify(wordSearched.value);
+    }
 });
