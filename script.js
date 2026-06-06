@@ -15,7 +15,7 @@ const spotify = (word) => {
         }
     };
 
-    fetch("https://shazam.p.rapidapi.com/search?term=" + word + "&locale=en-US&offset=0&limit=5", options)
+    fetch("https://shazam-api6.p.rapidapi.com/search?term=" + word + "&locale=en-US&offset=0&limit=5", options)
         .then((response) => { return response.json() })
         .then((response) => {
             //unhiding the div
